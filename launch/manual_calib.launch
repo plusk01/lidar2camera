@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <arg name="camera" default="forward/color" />
+    <arg name="points" default="lidar_points" />
+
+    <node pkg="lidar2camera" type="manual_calib" name="manual_calib" output="screen">
+        <remap from="camera_info" to="$(arg camera)/camera_info" />
+        <remap from="image_raw" to="$(arg camera)/image_raw" />
+        <remap from="points" to="$(arg points)" />
+        <remap from="image_pts_raw" to="$(arg camera)/image_pts_raw" />
+    </node>
+</launch>
