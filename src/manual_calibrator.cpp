@@ -194,7 +194,7 @@ void ManualCalibrator::run()
   pangolin::Var<double> degreeStep("cp.deg step", sr_, 0, 1);
   pangolin::Var<double> tStep("cp.t step(cm)", st_ * 1e2, 0, 15);
   pangolin::Var<double> fxfyScale("cp.fxfy scale", 1.005, 1, 1.1);
-  pangolin::Var<int> pointSize("cp.point size", 2, 1, 5);
+  // pangolin::Var<int> pointSize("cp.point size", 2, 1, 5);
 
   pangolin::Var<bool> addXdegree("cp.+ x degree", false, false);
   pangolin::Var<bool> minusXdegree("cp.- x degree", false, false);
@@ -258,12 +258,12 @@ void ManualCalibrator::run()
       // cali_scale_fxfy_ = fxfyScale.Get();
       // std::cout << "fxfy calib scale changed to " << cali_scale_fxfy_ << std::endl;
     }
-    if (pointSize.GuiChanged()) {
-      int ptsize = pointSize.Get();
-      // projector.setPointSize(ptsize);
-      // current_frame = projector.ProjectToRawImage(img, intrinsic_matrix_, dist, calibration_matrix_);
-      // std::cout << "point size changed to " << ptsize << std::endl;
-    }
+    // if (pointSize.GuiChanged()) {
+    //   int ptsize = pointSize.Get();
+    //   // projector.setPointSize(ptsize);
+    //   // current_frame = projector.ProjectToRawImage(img, intrinsic_matrix_, dist, calibration_matrix_);
+    //   // std::cout << "point size changed to " << ptsize << std::endl;
+    // }
 
     for (size_t i=0; i<refinement_modifiers.size(); i++) {
       if (pangolin::Pushed(refinement_modifiers[i])) {
@@ -333,14 +333,14 @@ void ManualCalibrator::print_transform(const std::string& name,
   Eigen::Quaterniond q;
   q = T.rotation();
 
-  std::cout << "x y z qw qx qy qz" << std::endl;
+  std::cout << "x y z qx qy qz qw" << std::endl;
   std::cout << T.translation().x() << " "
             << T.translation().y() << " "
             << T.translation().z() << " "
-            << q.w() << " "
             << q.x() << " "
             << q.y() << " "
-            << q.z() << std::endl << std::endl;
+            << q.z() << " "
+            << q.w() << std::endl << std::endl;
 
 }
 
