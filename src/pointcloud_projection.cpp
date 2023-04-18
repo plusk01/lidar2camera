@@ -14,48 +14,6 @@ namespace l2c {
 PointCloudProjection::PointCloudProjection(const ros::NodeHandle& nh, const ros::NodeHandle& nhp)
 : nh_(nh), nhp_(nhp), it_(nh)
 {
-  // // Check namespace to find name of robot -- leverage fs module
-  // fs::path ns(ros::this_node::getNamespace());
-  // robot_ = ns.filename();
-  // if (robot_.empty()) {
-  //   ROS_FATAL("Required robot namespace is missing. Hint: use launch file "
-  //             "with node namespacing or `rosrun ... __ns:=robot_name`\n");
-  //   ros::shutdown();
-  //   return;
-  // }
-  // ROS_INFO_STREAM("Robot: " << robot_);
-
-
-  // double min_range;
-  // if (!nhp_.getParam("dataroot", dataroot_)) {
-  //   ROS_FATAL("Must specify Kimera-Multi Data root in param `dataroot`");
-  //   ros::shutdown();
-  //   return;
-  // }
-
-  // datapath_ = dataroot_;
-  // if (!fs::exists(datapath_)) {
-  //   ROS_FATAL_STREAM("data root `" << dataroot_ << "` does not exist");
-  //   ros::shutdown();
-  //   return; 
-  // }
-
-  // int seq;
-  // if (!nhp_.getParam("sequence", seq)) {
-  //   ROS_FATAL("Must specify which sequence in param `sequence` (1014, 1207, or 1208).");
-  //   ros::shutdown();
-  //   return;
-  // } else {
-  //   if (seq != 1014 && seq != 1207 && seq != 1208) {
-  //     ROS_FATAL("The `sequence` param can only be 1014, 1207, or 1208.");
-  //     ros::shutdown();
-  //     return;
-  //   }
-  //   sequence_ = std::to_string(seq);
-  // }
-  // 
-
-
   tf_listener_.reset(new tf2_ros::TransformListener(tfbuf_));
 
   pub_img_ = it_.advertise("image_pts_raw", 1);
@@ -98,6 +56,7 @@ double PointCloudProjection::map_range(double t,
 
 cv::Scalar PointCloudProjection::get_range_color(double range2)
 {
+  // NOTE: Hardcoded min and max ranges, squared
   const double t = map_range(range2, 1.5*1.5, 15*15, -1, 1);
 
   const auto [red, green, blue] = colormap_jet(t);
