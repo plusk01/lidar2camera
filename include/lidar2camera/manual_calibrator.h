@@ -91,7 +91,7 @@ namespace l2c {
 
     double map_range(double t, double il, double iu, double ol, double ou);
 
-    cv::Scalar get_range_color(double range2);
+    cv::Scalar get_range_color(double range2, double min2 = 1, double max2 = 225);
 
 
     Eigen::Affine3d T_CL_; ///< lidar w.r.t camera transform
@@ -115,7 +115,8 @@ namespace l2c {
                                 const image_geometry::PinholeCameraModel& cam,
                                 const sensor_msgs::PointCloud2ConstPtr& msg_pcd,
                                 const Eigen::Affine3d& T_CP,
-                                bool image_rectified);
+                                bool image_rectified,
+                                bool intensity_color);
 
     void build_modifier_transforms();
 

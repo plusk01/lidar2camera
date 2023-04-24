@@ -27,7 +27,7 @@ ManualCalibrator::ManualCalibrator(const ros::NodeHandle& nh, const ros::NodeHan
   sub_img_.subscribe(nh_, "image_raw", 1);
   sub_pcd_.subscribe(nh_, "points", 1);
 
-  sync_.reset(new Sync(MySyncPolicy(30), sub_cinfo_, sub_img_, sub_pcd_));
+  sync_.reset(new Sync(MySyncPolicy(60), sub_cinfo_, sub_img_, sub_pcd_));
   sync_->registerCallback(boost::bind(&ManualCalibrator::img_pcd_cb, this, _1, _2, _3));
 }
 
@@ -67,9 +67,9 @@ double ManualCalibrator::map_range(double t,
 
 // ----------------------------------------------------------------------------
 
-cv::Scalar ManualCalibrator::get_range_color(double range2)
+cv::Scalar ManualCalibrator::get_range_color(double range2, double min2, double max2)
 {
-  const double t = map_range(range2, 1.5*1.5, 15*15, -1, 1);
+  const double t = map_range(range2, min2, max2, -1, 1);
 
   const auto [red, green, blue] = colormap_jet(t);
   
@@ -104,7 +104,8 @@ void ManualCalibrator::project_points_onto_image(cv::Mat& img,
                                 const image_geometry::PinholeCameraModel& cam,
                                 const sensor_msgs::PointCloud2ConstPtr& msg_pcd,
                                 const Eigen::Affine3d& T_CP,
-                                bool image_rectified)
+                                bool image_rectified,
+                                bool intensity_color)
 {
   const cv::Size sz = img.size();
   sensor_msgs::PointCloud2ConstIterator<float> it(*msg_pcd, "x");
@@ -122,8 +123,16 @@ void ManualCalibrator::project_points_onto_image(cv::Mat& img,
 
     if ((uv_rect.x >= 0 && uv_rect.x < sz.width) && (uv_rect.y >= 0 && uv_rect.y < sz.height)) {
       const cv::Point2d uv = (image_rectified) ? uv_rect : cam.unrectifyPoint(uv_rect);
-      const double range2 = xyz.dot(xyz);
-      cv::circle(img, uv, 1, get_range_color(range2), -1);
+      cv::Scalar color;
+      if (intensity_color) {
+        const double intensity = it[4]; // TODO: make this less hardcoded
+                                        // need to access fields properly.
+        color = get_range_color(intensity * intensity, 100*100, 3000*3000);
+      } else {
+        const double range2 = xyz.dot(xyz);
+        color = get_range_color(range2, 1*1, 15*15);
+      }
+      cv::circle(img, uv, 1, color, -1);
     }
   }
 }
@@ -188,12 +197,12 @@ void ManualCalibrator::run()
   // control panel
   pangolin::CreatePanel("cp").SetBounds(pangolin::Attach::Pix(30), 1.0, 0.0,
                                         pangolin::Attach::Pix(150));
-  // pangolin::Var<bool> displayMode("cp.Intensity Color", false, true);
+  pangolin::Var<bool> displayMode("cp.Intensity Color", false, true);
   // pangolin::Var<bool> filterMode("cp.Overlap Filter", false, true);
   pangolin::Var<bool> rectifyMode("cp.Rectify Image", false, true);
   pangolin::Var<double> degreeStep("cp.deg step", sr_, 0, 1);
   pangolin::Var<double> tStep("cp.t step(cm)", st_ * 1e2, 0, 15);
-  pangolin::Var<double> fxfyScale("cp.fxfy scale", 1.005, 1, 1.1);
+  // pangolin::Var<double> fxfyScale("cp.fxfy scale", 1.005, 1, 1.1);
   // pangolin::Var<int> pointSize("cp.point size", 2, 1, 5);
 
   pangolin::Var<bool> addXdegree("cp.+ x degree", false, false);
@@ -242,7 +251,8 @@ void ManualCalibrator::run()
     } else {
       current_frame = img_.clone();
     }
-    project_points_onto_image(current_frame, cam_model_, msg_pcd_, T_refined_ * T_CL_, rectifyMode);
+
+    project_points_onto_image(current_frame, cam_model_, msg_pcd_, T_refined_ * T_CL_, rectifyMode, displayMode);
 
     if (degreeStep.GuiChanged()) {
       sr_ = degreeStep.Get();
@@ -254,10 +264,10 @@ void ManualCalibrator::run()
       build_modifier_transforms();
     }
 
-    if (fxfyScale.GuiChanged()) {
+    // if (fxfyScale.GuiChanged()) {
       // cali_scale_fxfy_ = fxfyScale.Get();
       // std::cout << "fxfy calib scale changed to " << cali_scale_fxfy_ << std::endl;
-    }
+    // }
     // if (pointSize.GuiChanged()) {
     //   int ptsize = pointSize.Get();
     //   // projector.setPointSize(ptsize);
